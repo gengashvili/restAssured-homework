@@ -33,8 +33,8 @@ public class BooksSteps {
         response
                 .then()
                 .assertThat()
-                .body("books["+ BooksData.firstBookIndex +"].author", equalTo(BooksData.expectedFirstBookAuthor))
-                .body("books["+ BooksData.secondBookIndex +"].author", equalTo(BooksData.expectedSecondBookAuthor));
+                .body("books[" + BooksData.firstBookIndex + "," + BooksData.secondBookIndex + "].author",
+                        contains(BooksData.expectedFirstBookAuthor, BooksData.expectedSecondBookAuthor));
 
         System.out.println("validate books authors");
     }
