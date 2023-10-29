@@ -1,52 +1,47 @@
 package steps;
 
-import data.BookingUpdateData;
+import data.BookingData;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.json.simple.JSONObject;
-
+import io.restassured.specification.RequestSpecification;
+import utils.RequestSpec;
 
 public class BookingSteps {
-    JSONObject tokenRequest = BookingUpdateData.getTokenRequestData();
-    JSONObject putRequest = BookingUpdateData.getPutRequestData();
-    final String baseUri = "https://restful-booker.herokuapp.com";
 
-    @Step("get token for put request")
-    public String getToken() {
-        Response tokenResponse = RestAssured.given()
-                .contentType("application/json")
-                .accept("application/json")
-                .body(tokenRequest.toJSONString())
-                .post(baseUri + "/auth");
+    RequestSpecification requestSpecification;
+    RequestSpecification httpRequest;
+    Response deleteResponse;
 
-        String token = tokenResponse.jsonPath().getString("token");
+    @Step("create request specification, set authentication and pass it to httpRequest spec")
+    public BookingSteps createRequestSpecification() {
+        requestSpecification = RequestSpec.getRequestSpecification(BookingData.baseUri, BookingData.basePath).build()
+                .auth()
+                .preemptive()
+                .basic(BookingData.userName, BookingData.password);
 
-        System.out.println("got token successfully");
-        return token;
+        httpRequest = RestAssured.given().spec(requestSpecification);
+
+        return this;
     }
 
-    @Step("update booking and return response")
-    public Response updateBooking(String token) {
-        Response putResponse = RestAssured.given()
-                .contentType("application/json")
-                .accept("application/json")
-                .header("Cookie", "token=" + token)
-                .body(putRequest.toJSONString())
-                .put(baseUri + "/booking/1");
+    @Step("get existing booking list and delete first one")
+    public BookingSteps deleteBooking() {
+        Response bookingIdResponse = httpRequest.get();
 
-        System.out.println("update booking successfully");
-        return putResponse;
+        int doomedBookingID = bookingIdResponse.then().extract().jsonPath().getInt("[0].bookingid");
+
+        deleteResponse = httpRequest.delete("/" + doomedBookingID);
+
+        return this;
     }
 
-    @Step("validate that status code is 201 and log response data")
-    public void validateStatusCodeAndLogData(Response response) {
-        response
-                .then()
-                .log()
-                .ifStatusCodeIsEqualTo(201) // ეს არ დალოგავს არაფერს, იმიტომ რომ 200ია სტატუს კოდი:)
-                .extract()
-                .statusCode();
+    @Step("validate that response code is validate that response code is successful")
+    public BookingSteps validateResponseCode() {
+        deleteResponse.then().assertThat().statusCode(201);
+
+        System.out.println("booking deleted successfully and status line is: " + deleteResponse.getStatusLine() + ".");
+        return this;
     }
 
 }
