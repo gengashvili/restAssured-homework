@@ -7,7 +7,6 @@ public class RequestSpec {
     public static RequestSpecBuilder getRequestSpecification(String baseUri, String basePath) {
         return new RequestSpecBuilder()
                 .setContentType(ContentType.JSON)
-                .setAccept(ContentType.JSON)
                 .setBaseUri(baseUri)
                 .setBasePath(basePath);
     }
