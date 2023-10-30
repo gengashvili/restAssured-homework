@@ -5,21 +5,26 @@ import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import models.common.BookingDates;
 import models.request.*;
 
+import models.response.*;
 import utils.RequestSpec;
 
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.in;
 
 public class BookingSteps {
     RequestSpecification requestSpecification;
     RequestSpecification httpRequest;
-    Booking newBooking;
+    BookingRequest bookingRequest;
     BookingDates newBookingDates;
-    int addedBookingId;
+    CreatedBookingResponse createdBookingResponse;
+    BookingResponse bookingResponse;
+
 
 
     @Step("create request specification, set authentication and pass it to httpRequest spec")
@@ -37,19 +42,19 @@ public class BookingSteps {
 
     @Step
     public BookingSteps setNewBookingObject() {
-        newBooking = new Booking();
+        bookingRequest = new BookingRequest();
         newBookingDates = new BookingDates();
 
-        newBooking.setFirstname(BookingData.newBookingFirstName);
-        newBooking.setLastname(BookingData.newBookingLastName);
-        newBooking.setTotalprice(BookingData.newBookingTotalPrice);
-        newBooking.setDepositpaid(BookingData.newBookingDepositPaid);
+        bookingRequest.setFirstname(BookingData.newBookingFirstName);
+        bookingRequest.setLastname(BookingData.newBookingLastName);
+        bookingRequest.setTotalprice(BookingData.newBookingTotalPrice);
+        bookingRequest.setDepositpaid(BookingData.newBookingDepositPaid);
 
         newBookingDates.setCheckin(BookingData.newBookingCheckin);
         newBookingDates.setCheckout(BookingData.newBookingCheckout);
 
-        newBooking.setBookingdates(newBookingDates);
-        newBooking.setAdditionalneeds(BookingData.newBookingAditionalneeds);
+        bookingRequest.setAdditionalneeds(BookingData.newBookingAditionalneeds);
+        bookingRequest.setBookingdates(newBookingDates);
 
         return this;
     }
@@ -57,21 +62,21 @@ public class BookingSteps {
 
     @Step
     public BookingSteps createNewBooking() {
-        Response response = httpRequest.given().body(newBooking).post();
+        Response response = httpRequest.given().body(bookingRequest).post();
 
-        addedBookingId = response.then().extract().jsonPath().getInt("bookingid");
+        createdBookingResponse = response.as(CreatedBookingResponse.class);
 
         return this;
     }
 
     @Step()
     public BookingSteps validateAddedBooking() {
-        Response response = httpRequest.get("/" + addedBookingId);
+        Response response = httpRequest.get("/" + createdBookingResponse.getBookingid());
 
-        Booking booking = response.as(Booking.class);
+        bookingResponse = response.as(BookingResponse.class);
 
-        String actualFirstName = booking.getFirstname();
-        String actualLastName = booking.getLastname();
+        String actualFirstName = bookingResponse.getFirstname();
+        String actualLastName = bookingResponse.getLastname();
 
         String expectedFirstName = BookingData.newBookingFirstName;
         String expectedLastName = BookingData.newBookingLastName;

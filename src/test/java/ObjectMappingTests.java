@@ -1,9 +1,3 @@
-import data.BookingData;
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import models.request.Booking;
-import models.request.BookingDates;
 import org.testng.annotations.Test;
 import steps.BookingSteps;
 
