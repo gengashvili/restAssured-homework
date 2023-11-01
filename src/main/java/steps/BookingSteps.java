@@ -19,7 +19,7 @@ public class BookingSteps {
     RequestSpecification requestSpecification;
     RequestSpecification httpRequest;
     BookingRequest updateBookingRequest;
-    int updatedBookingId;
+    Response updatedBookingResponse;
 
 
     @Step("create request specification, set authentication and pass it to httpRequest spec")
@@ -35,7 +35,7 @@ public class BookingSteps {
         return this;
     }
 
-    @Step()
+    @Step("set data into update booking request object")
     public BookingSteps setUpdateBookingRequest(
             String firstName,
             String lastName,
@@ -63,24 +63,19 @@ public class BookingSteps {
         return this;
     }
 
-    @Step
+    @Step("update booking")
     public BookingSteps updateBooking() {
         //ჰარდად წამოღებული აიდებით ვერ ეძებდა და ამიტომ მომაქვს გეთ რექვესთით შემდეგ რომ განვაახლო არსებული booking :)
         Response response = httpRequest.get();
         int bookingID = response.jsonPath().getInt("[0].bookingid");
 
-        httpRequest.body(updateBookingRequest).put("/" + bookingID);
-
-        //ვალიდაციის სტეპში ამ აიდით რომ გამოვიძახო ახლიდან სერვერიდან და შევამოწმო მართლა განახლდა თუ არა
-        updatedBookingId = bookingID;
+        updatedBookingResponse = httpRequest.body(updateBookingRequest).put("/" + bookingID);
 
         return this;
     }
 
-    @Step
+    @Step("validate booking update status code and total price field")
     public BookingSteps validateUpdatedBooking(int expectedStatusCode, int expectedBookingTotalPrice) {
-        Response updatedBookingResponse = httpRequest.get("/" + updatedBookingId);
-
         updatedBookingResponse.then().assertThat().statusCode(expectedStatusCode);
 
         BookingResponse bookingResponse = updatedBookingResponse.as(BookingResponse.class);
