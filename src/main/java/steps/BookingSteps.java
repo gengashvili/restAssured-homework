@@ -8,84 +8,86 @@ import io.restassured.specification.RequestSpecification;
 import models.common.BookingDates;
 import models.request.*;
 
-import models.response.*;
+import models.response.BookingResponse;
 import utils.RequestSpec;
-
-import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.in;
+
 
 public class BookingSteps {
     RequestSpecification requestSpecification;
     RequestSpecification httpRequest;
-    BookingRequest bookingRequest;
-    BookingDates newBookingDates;
-    CreatedBookingResponse createdBookingResponse;
-    BookingResponse bookingResponse;
-
+    BookingRequest updateBookingRequest;
+    int updatedBookingId;
 
 
     @Step("create request specification, set authentication and pass it to httpRequest spec")
     public BookingSteps createRequestSpecification() {
-        requestSpecification = RequestSpec.getRequestSpecification(BookingData.baseUri, BookingData.basePath)
+        requestSpecification = RequestSpec.getRequestSpecification(BookingData.BASE_URI, BookingData.BASE_PATH)
                 .build()
                 .auth()
                 .preemptive()
-                .basic(BookingData.userName, BookingData.password);
+                .basic(BookingData.USERNAME, BookingData.PASSWORD);
 
         httpRequest = RestAssured.given().spec(requestSpecification);
 
         return this;
     }
 
-    @Step
-    public BookingSteps setNewBookingObject() {
-        bookingRequest = new BookingRequest();
-        newBookingDates = new BookingDates();
-
-        bookingRequest.setFirstname(BookingData.newBookingFirstName);
-        bookingRequest.setLastname(BookingData.newBookingLastName);
-        bookingRequest.setTotalprice(BookingData.newBookingTotalPrice);
-        bookingRequest.setDepositpaid(BookingData.newBookingDepositPaid);
-
-        newBookingDates.setCheckin(BookingData.newBookingCheckin);
-        newBookingDates.setCheckout(BookingData.newBookingCheckout);
-
-        bookingRequest.setAdditionalneeds(BookingData.newBookingAditionalneeds);
-        bookingRequest.setBookingdates(newBookingDates);
-
-        return this;
-    }
-
-
-    @Step
-    public BookingSteps createNewBooking() {
-        Response response = httpRequest.given().body(bookingRequest).post();
-
-        createdBookingResponse = response.as(CreatedBookingResponse.class);
-
-        return this;
-    }
-
     @Step()
-    public BookingSteps validateAddedBooking() {
-        Response response = httpRequest.get("/" + createdBookingResponse.getBookingid());
+    public BookingSteps setUpdateBookingRequest(
+            String firstName,
+            String lastName,
+            int totalPrice,
+            boolean depositPaid,
+            String checkIn,
+            String checkOut,
+            String additionalNeeds,
+            Integer passportNo) {
+        updateBookingRequest = new BookingRequest();
+        BookingDates bookingDates = new BookingDates();
 
-        bookingResponse = response.as(BookingResponse.class);
+        updateBookingRequest.setFirstName(firstName);
+        updateBookingRequest.setLastName(lastName);
+        updateBookingRequest.setTotalPrice(totalPrice);
+        updateBookingRequest.setDepositPaid(depositPaid);
 
-        String actualFirstName = bookingResponse.getFirstname();
-        String actualLastName = bookingResponse.getLastname();
+        bookingDates.setCheckIN(checkIn);
+        bookingDates.setCheckOut(checkOut);
 
-        String expectedFirstName = BookingData.newBookingFirstName;
-        String expectedLastName = BookingData.newBookingLastName;
+        updateBookingRequest.setBookingDates(bookingDates);
+        updateBookingRequest.setAdditionalNeeds(additionalNeeds);
+        updateBookingRequest.setPassportNo(passportNo);
 
-        List<String> actualData = List.of(actualFirstName, actualLastName);
+        return this;
+    }
 
-        List<String> expectedData = List.of(expectedFirstName, expectedLastName);
+    @Step
+    public BookingSteps updateBooking() {
+        //ჰარდად წამოღებული აიდებით ვერ ეძებდა და ამიტომ მომაქვს გეთ რექვესთით შემდეგ რომ განვაახლო არსებული booking :)
+        Response response = httpRequest.get();
+        int bookingID = response.jsonPath().getInt("[0].bookingid");
 
-        assertThat(actualData, equalTo(expectedData));
+        httpRequest.body(updateBookingRequest).put("/" + bookingID);
+
+        //ვალიდაციის სტეპში ამ აიდით რომ გამოვიძახო ახლიდან სერვერიდან და შევამოწმო მართლა განახლდა თუ არა
+        updatedBookingId = bookingID;
+
+        return this;
+    }
+
+    @Step
+    public BookingSteps validateUpdatedBooking(int expectedStatusCode, int expectedBookingTotalPrice) {
+        Response updatedBookingResponse = httpRequest.get("/" + updatedBookingId);
+
+        updatedBookingResponse.then().assertThat().statusCode(expectedStatusCode);
+
+        BookingResponse bookingResponse = updatedBookingResponse.as(BookingResponse.class);
+
+        int actualTotalPrice = bookingResponse.getTotalPrice();
+
+        assertThat(actualTotalPrice,equalTo(expectedBookingTotalPrice));
 
         return this;
     }
