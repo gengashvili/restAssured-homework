@@ -1,5 +1,6 @@
 package models.common;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,10 @@ import lombok.Setter;
 @JsonPropertyOrder({"checkin", "checkout"})
 public class BookingDates {
 
-    private String checkin, checkout;
+    @JsonProperty("checkin")
+    private String checkIN;
+
+    @JsonProperty("checkout")
+    private String checkOut;
 
 }
