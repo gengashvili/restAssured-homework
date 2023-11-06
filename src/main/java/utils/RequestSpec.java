@@ -5,9 +5,9 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 public class RequestSpec {
 
-    public static RequestSpecBuilder getRequestSpecification(String baseUri, String basePath) {
+    public static RequestSpecBuilder getRequestSpecification(String baseUri, String basePath, ContentType contentType) {
         return new RequestSpecBuilder()
-                .setContentType(ContentType.JSON)
+                .setContentType(contentType)
                 .setBaseUri(baseUri)
                 .setBasePath(basePath)
                 .addFilter(new AllureRestAssured());

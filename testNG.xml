@@ -1,9 +1,9 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 
-<suite name="rest assured fifth task">
-    <test name="fifth task tests">
+<suite name="XmlTask">
+    <test name="XmlTask tests">
         <classes>
-            <class name="FifthTask"/>
+            <class name="XmlTask"/>
         </classes>
     </test>
 </suite>
